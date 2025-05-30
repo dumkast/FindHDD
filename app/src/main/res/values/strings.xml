@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">FindHDD</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="favorite_icon">Избранное</string>
+    <string name="edit_hdd">Изменение</string>
+    <string name="delete_hdd">Удаление</string>
+
+    <string name="hdd_image">Изображение типа накопителя</string>
+
+    <!-- Заголовки блоков характеристик -->
+    <string name="specs_general">Общие характеристики</string>
+    <string name="specs_performance">Производительность</string>
+    <string name="specs_physical">Физические параметры</string>
+    <string name="specs_other">Дополнительно</string>
+
+    <!-- Описание -->
+    <string name="description">Описание</string>
+
+    <!-- Для поведения BottomSheet (если используется стандартное поведение) -->
+    <string name="bottom_sheet_behavior">com.google.android.material.bottomsheet.BottomSheetBehavior</string>
+</resources>
