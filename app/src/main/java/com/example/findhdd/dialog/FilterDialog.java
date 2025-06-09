@@ -23,7 +23,7 @@ import lombok.Setter;
 
 public class FilterDialog extends DialogFragment {
     @Setter
-    private HardDriveFilter currentFilter;
+    private HardDriveFilter currentFilter = new HardDriveFilter();
     @Setter
     private OnFilterAppliedListener listener;
 
@@ -67,6 +67,7 @@ public class FilterDialog extends DialogFragment {
         });
 
         dialogView.findViewById(R.id.btnReset).setOnClickListener(v -> {
+            currentFilter = new HardDriveFilter();
             if (listener != null) listener.onFilterReset();
             dialog.dismiss();
         });
@@ -75,6 +76,9 @@ public class FilterDialog extends DialogFragment {
     }
 
     private void setupCheckboxLists(View dialogView) {
+        if (currentFilter == null) {
+            currentFilter = new HardDriveFilter();
+        }
         LinearLayout llBrands = dialogView.findViewById(R.id.llBrands);
         LinearLayout llTypes = dialogView.findViewById(R.id.llTypes);
         LinearLayout llPurposes = dialogView.findViewById(R.id.llPurposes);

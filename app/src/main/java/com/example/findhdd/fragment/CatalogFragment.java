@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,7 +68,7 @@ public class CatalogFragment extends Fragment {
         String username = prefs.getUsername();
         String password = prefs.getPassword();
         boolean isAdmin = prefs.isAdmin();
-        // Инициализация поиска
+
         searchEditText = view.findViewById(R.id.searchEditText);
         searchEditText.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -77,19 +78,29 @@ public class CatalogFragment extends Fragment {
             return false;
         });
 
-        // Кнопка поиска (иконка в TextInputLayout)
         TextInputLayout searchContainer = view.findViewById(R.id.searchContainer);
         searchContainer.setEndIconOnClickListener(v -> performSearch());
 
-        adapter = new HardDriveAdapter(new ArrayList<>(), this::toggleFavorite, isAdmin, false);
-        if (isAdmin) {
-            adapter.setAdminActionListener(new HardDriveAdapter.AdminActionListener() {
-                @Override
-                public void onEdit(HardDriveDTO hdd) {
+        adapter = new HardDriveAdapter(isAdmin);
+        adapter.setActionListener(new HardDriveAdapter.ActionListener() {
+            @Override
+            public void onFavoriteToggled(HardDriveDTO hdd, boolean isFavorite) {
+                toggleFavorite(hdd, isFavorite);
+            }
+
+            @Override
+            public void onDetailsClick(HardDriveDTO hdd) {
+                showDetailsDialog(hdd);
+            }
+
+            @Override
+            public void onEdit(HardDriveDTO hdd) {
                     showEditDialog(hdd);
-                }
-                @Override
-                public void onDelete(HardDriveDTO hdd) {
+            }
+
+            @Override
+            public void onDelete(HardDriveDTO hdd) {
+                if (isAdmin) {
                     new AlertDialog.Builder(requireContext())
                             .setTitle("Удаление")
                             .setMessage("Удалить диск \"" + hdd.getBrand() + " " + hdd.getModel() + "\"?")
@@ -97,13 +108,12 @@ public class CatalogFragment extends Fragment {
                             .setNegativeButton("Отмена", null)
                             .show();
                 }
-            });
-        }
+            }
+        });
         recyclerView.setAdapter(adapter);
-        adapter.setOnDetailsClickListener(this::showDetailsDialog);
 
         if (username == null || password == null) {
-            ViewUtils.showErrorToast(getContext(), "Ошибка авторизации. Повторите вход.");
+            Toast.makeText(getContext(), "Ошибка авторизации. Повторите вход.", Toast.LENGTH_SHORT).show();
             return view;
         }
 
@@ -135,13 +145,13 @@ public class CatalogFragment extends Fragment {
                         adapter.updateData(hardDrives);
                         updateEmptyState();
                     } else {
-                        ViewUtils.showErrorToast(getContext(), "Ошибка поиска");
+                        Toast.makeText(getContext(), "Ошибка поиска", Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<List<HardDriveDTO>> call, Throwable t) {
-                    ViewUtils.showErrorToast(getContext(), "Ошибка сети: " + t.getMessage());
+                    Toast.makeText(getContext(), "Ошибка сети: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -163,12 +173,12 @@ public class CatalogFragment extends Fragment {
                     adapter.updateData(hardDrives);
                     updateEmptyState();
                 } else {
-                    ViewUtils.showErrorToast(getContext(), "Ошибка загрузки данных");
+                    Toast.makeText(getContext(), "Ошибка загрузки данных", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<List<HardDriveDTO>> call, Throwable t) {
-                ViewUtils.showErrorToast(getContext(), "Ошибка сети: " + t.getMessage());
+                Toast.makeText(getContext(), "Ошибка сети: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -192,7 +202,7 @@ public class CatalogFragment extends Fragment {
                         }
                     }
                     @Override
-                    public void onFailure(Call<List<HardDriveDTO>> call, Throwable t) { /* игнорируем */ }
+                    public void onFailure(Call<List<HardDriveDTO>> call, Throwable t) {}
                 });
     }
 
@@ -208,15 +218,15 @@ public class CatalogFragment extends Fragment {
                     if (shouldBeFavorite) favoriteIds.add(hdd.getId());
                     else favoriteIds.remove(hdd.getId());
                     adapter.setFavoriteIds(favoriteIds);
-                    ViewUtils.showToast(getContext(), shouldBeFavorite ? "Добавлено в избранное" : "Удалено из избранного");
+                    Toast.makeText(getContext(), shouldBeFavorite ? "Добавлено в избранное" : "Удалено из избранного", Toast.LENGTH_SHORT).show();
                     loadFavorites();
                 } else {
-                    ViewUtils.showErrorToast(getContext(), shouldBeFavorite ? "Ошибка при добавлении в избранное" : "Ошибка при удалении из избранного");
+                    Toast.makeText(getContext(), shouldBeFavorite ? "Ошибка при добавлении в избранное" : "Ошибка при удалении из избранного", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(@NonNull Call<ApiMessage> call, @NonNull Throwable t) {
-                ViewUtils.showErrorToast(getContext(), "Ошибка сети: " + t.getMessage());
+                Toast.makeText(getContext(), "Ошибка сети: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -226,15 +236,15 @@ public class CatalogFragment extends Fragment {
             @Override
             public void onResponse(Call<ApiMessage> call, Response<ApiMessage> response) {
                 if (response.isSuccessful()) {
-                    ViewUtils.showToast(getContext(), "Удалено");
+                    Toast.makeText(getContext(), "Удалено", Toast.LENGTH_SHORT).show();
                     updateHardDriveList();
                 } else {
-                    ViewUtils.showErrorToast(getContext(), "Ошибка удаления");
+                    Toast.makeText(getContext(), "Ошибка удаления", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<ApiMessage> call, Throwable t) {
-                ViewUtils.showErrorToast(getContext(), "Сервер недоступен");
+                Toast.makeText(getContext(), "Сервер недоступен", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -250,15 +260,15 @@ public class CatalogFragment extends Fragment {
             @Override
             public void onResponse(Call<HardDriveDTO> call, Response<HardDriveDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    ViewUtils.showToast(getContext(), "Обновлено");
+                    Toast.makeText(getContext(), "Обновлено", Toast.LENGTH_SHORT).show();
                     updateHardDriveList();
                 } else {
-                    ViewUtils.showErrorToast(getContext(), "Ошибка обновления");
+                    Toast.makeText(getContext(), "Ошибка обновления", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<HardDriveDTO> call, Throwable t) {
-                ViewUtils.showErrorToast(getContext(), "Сервер недоступен");
+                Toast.makeText(getContext(), "Сервер недоступен", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -287,12 +297,12 @@ public class CatalogFragment extends Fragment {
                             adapter.updateData(hardDrives);
                             updateEmptyState();
                         } else {
-                            ViewUtils.showErrorToast(getContext(), "Ошибка при сортировке");
+                            Toast.makeText(getContext(), "Ошибка при сортировке", Toast.LENGTH_SHORT).show();
                         }
                     }
                     @Override
                     public void onFailure(Call<List<HardDriveDTO>> call, Throwable t) {
-                        ViewUtils.showErrorToast(getContext(), "Ошибка сортировки: " + t.getMessage());
+                        Toast.makeText(getContext(), "Ошибка сортировки: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -321,20 +331,17 @@ public class CatalogFragment extends Fragment {
         dialog.show(getParentFragmentManager(), "filterDialog");
     }
 
-
-
     private void showAddDialog() {
         AddHardDriveDialog dialog = new AddHardDriveDialog();
         dialog.setOnHardDriveAddedListener(() -> {
-            ViewUtils.showToast(getContext(), "Диск добавлен");
+            Toast.makeText(getContext(), "Диск добавлен", Toast.LENGTH_SHORT).show();
             updateHardDriveList();
         });
         dialog.show(getParentFragmentManager(), "addHardDriveDialog");
     }
 
-
     private void showDetailsDialog(HardDriveDTO hdd) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_hdd_details, null);
         builder.setView(dialogView);
 
@@ -347,20 +354,20 @@ public class CatalogFragment extends Fragment {
         TextView tvBrandModel = dialogView.findViewById(R.id.tvBrandModel);
         tvBrandModel.setText(hdd.getBrand() + " " + hdd.getModel());
 
-        ViewUtils.setupSpecView(dialogView, R.id.specType, "Тип", hdd.getType());
-        ViewUtils.setupSpecView(dialogView, R.id.specCapacity, "Объем", hdd.getCapacity() + " ГБ");
-        ViewUtils.setupSpecView(dialogView, R.id.specFormFactor, "Форм-фактор", hdd.getFormFactor());
-        ViewUtils.setupSpecView(dialogView, R.id.specPurpose, "Назначение", hdd.getPurpose());
-        ViewUtils.setupSpecView(dialogView, R.id.specSpeeds, "Скорости",
+        setupSpecView(dialogView, R.id.specType, "Тип", hdd.getType());
+        setupSpecView(dialogView, R.id.specCapacity, "Объем", hdd.getCapacity() + " ГБ");
+        setupSpecView(dialogView, R.id.specFormFactor, "Форм-фактор", hdd.getFormFactor());
+        setupSpecView(dialogView, R.id.specPurpose, "Назначение", hdd.getPurpose());
+        setupSpecView(dialogView, R.id.specSpeeds, "Скорости",
                 "Чтение: " + hdd.getReadSpeed() + " МБ/с\nЗапись: " + hdd.getWriteSpeed() + " МБ/с");
-        ViewUtils.setupSpecView(dialogView, R.id.specInterface, "Интерфейс", hdd.getInterfaceType());
-        ViewUtils.setupSpecView(dialogView, R.id.specPower, "Потребление", hdd.getPowerConsumption() + " Вт");
-        ViewUtils.setupSpecView(dialogView, R.id.specDimensions, "Размеры",
+        setupSpecView(dialogView, R.id.specInterface, "Интерфейс", hdd.getInterfaceType());
+        setupSpecView(dialogView, R.id.specPower, "Потребление", hdd.getPowerConsumption() + " Вт");
+        setupSpecView(dialogView, R.id.specDimensions, "Размеры",
                 String.format(Locale.getDefault(), "%.1f × %.1f × %.1f мм",
                         hdd.getLength(), hdd.getWidth(), hdd.getHeight()));
-        ViewUtils.setupSpecView(dialogView, R.id.specWeight, "Вес", hdd.getWeight() + " г");
-        ViewUtils.setupSpecView(dialogView, R.id.specWarranty, "Гарантия", hdd.getWarranty());
-        ViewUtils.setupSpecView(dialogView, R.id.specPrice, "Цена", String.format(Locale.getDefault(), "%,.0f ₽", hdd.getPrice()));
+        setupSpecView(dialogView, R.id.specWeight, "Вес", hdd.getWeight() + " г");
+        setupSpecView(dialogView, R.id.specWarranty, "Гарантия", hdd.getWarranty());
+        setupSpecView(dialogView, R.id.specPrice, "Цена", String.format(Locale.getDefault(), "%,.0f ₽", hdd.getPrice()));
 
         TextView tvDescription = dialogView.findViewById(R.id.tvDescription);
         tvDescription.setText(hdd.getDescription() != null && !hdd.getDescription().isEmpty() ?
@@ -370,5 +377,15 @@ public class CatalogFragment extends Fragment {
         dialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
         dialog.show();
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+    }
+
+    private void setupSpecView(View parent, int resId, String name, String value) {
+        View specView = parent.findViewById(resId);
+        if (specView != null) {
+            TextView tvName = specView.findViewById(R.id.tvSpecName);
+            TextView tvValue = specView.findViewById(R.id.tvSpecValue);
+            if (tvName != null) tvName.setText(name);
+            if (tvValue != null) tvValue.setText(value);
+        }
     }
 }

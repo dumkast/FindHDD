@@ -1,33 +1,19 @@
 package com.example.findhdd.dto;
 
-import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class HardDriveFilter {
-    @SerializedName("brands")
-    private List<String> brands;
-
-    @SerializedName("types")
-    private List<String> types;
-
-    @SerializedName("purposes")
-    private List<String> purposes;
-
-    @SerializedName("formFactors")
-    private List<String> formFactors;
-
-    @SerializedName("minPrice")
+    private List<String> brands = new ArrayList<>();
+    private List<String> types = new ArrayList<>();
+    private List<String> purposes = new ArrayList<>();
+    private List<String> formFactors = new ArrayList<>();
     private Double minPrice;
-
-    @SerializedName("maxPrice")
     private Double maxPrice;
-
-    @SerializedName("minCapacity")
     private Integer minCapacity;
-
-    @SerializedName("maxCapacity")
     private Integer maxCapacity;
 
     public boolean isEmpty() {
@@ -40,6 +26,5 @@ public class HardDriveFilter {
                 && minCapacity == null
                 && maxCapacity == null;
     }
-
 }
 

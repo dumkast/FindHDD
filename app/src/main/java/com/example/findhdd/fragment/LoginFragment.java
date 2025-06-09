@@ -36,9 +36,6 @@ public class LoginFragment extends Fragment {
     private EditText usernameInput;
     private EditText passwordInput;
     private Button loginButton;
-    private UserApi userApi;
-    private String currentUsername;
-    private String currentPassword;
 
     @Nullable
     @Override
@@ -52,61 +49,52 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(v -> attemptLogin());
 
         TextView registerLink = view.findViewById(R.id.registerLink);
-        registerLink.setOnClickListener(v -> switchToRegister());
+        registerLink.setOnClickListener(v -> {
+            if (getActivity() instanceof AuthActivity) {
+                ((AuthActivity) getActivity()).loadRegisterFragment();
+            }
+        });
 
         return view;
     }
 
-    private void switchToRegister() {
-        if (getActivity() instanceof AuthActivity) {
-            ((AuthActivity) getActivity()).loadRegisterFragment();
-        }
-    }
-
     private void attemptLogin() {
-        currentUsername = usernameInput.getText().toString().toLowerCase();
-        currentPassword = passwordInput.getText().toString();
+        String username = usernameInput.getText().toString().trim().toLowerCase();
+        String password = passwordInput.getText().toString();
 
-        if (currentUsername.isEmpty() || currentPassword.isEmpty()) {
+        if (username.isEmpty() || password.isEmpty()) {
             Toast.makeText(getContext(), "Заполните все поля", Toast.LENGTH_SHORT).show();
             return;
         }
+        UserApi userApi = ApiClient.getClient(username, password).create(UserApi.class);
 
-        Retrofit retrofit = ApiClient.getClient(currentUsername, currentPassword);
-        userApi = retrofit.create(UserApi.class);
-
-        // Сначала выполняем вход
-        userApi.login().enqueue(new Callback<Void>() {
+        userApi.login().enqueue(new Callback<ApiMessage>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    // После успешного входа получаем информацию о пользователе
-                    fetchUserInfo();
+            public void onResponse(Call<ApiMessage> call, Response<ApiMessage> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(getContext(), response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    fetchUserInfo(userApi, username, password);
                 } else {
                     handleLoginError(response);
                 }
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(Call<ApiMessage> call, Throwable t) {
                 Toast.makeText(getContext(), "Ошибка сети: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void fetchUserInfo() {
+    private void fetchUserInfo(UserApi userApi, String username, String password) {
         userApi.getCurrentUser().enqueue(new Callback<UserDTO>() {
             @Override
             public void onResponse(Call<UserDTO> call, Response<UserDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     UserDTO user = response.body();
                     boolean isAdmin = user.getRole() != null && user.getRole().equals("ROLE_ADMIN");
-
-                    // Сохраняем учетные данные и роль
                     PreferencesManager prefs = new PreferencesManager(requireContext());
-                    prefs.saveCredentials(currentUsername, currentPassword, isAdmin);
-
-                    // Переходим в MainActivity
+                    prefs.saveCredentials(username, password, isAdmin);
                     navigateToMain();
                 } else {
                     Toast.makeText(getContext(), "Не удалось получить информацию о пользователе", Toast.LENGTH_SHORT).show();
@@ -120,7 +108,7 @@ public class LoginFragment extends Fragment {
         });
     }
 
-    private void handleLoginError(Response<Void> response) {
+    private void handleLoginError(Response<ApiMessage> response) {
         try {
             String errorBody = response.errorBody().string();
             ApiMessage error = new Gson().fromJson(errorBody, ApiMessage.class);

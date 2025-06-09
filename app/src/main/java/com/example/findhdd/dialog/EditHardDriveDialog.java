@@ -41,7 +41,7 @@ public class EditHardDriveDialog extends DialogFragment {
     private AutoCompleteTextView etType, etFormFactor, etPurpose;
 
     private final String[] typeOptions = {"SSD", "HDD"};
-    private final String[] formFactorOptions = {"2.5\"", "3.5\"", "M.2", "PCIe"};
+    private final String[] formFactorOptions = {"2.5\"", "3.5\"", "M.2"};
     private final String[] purposeOptions = {
             "для ноутбука",
             "для настольного компьютера",
@@ -50,8 +50,6 @@ public class EditHardDriveDialog extends DialogFragment {
             "для NAS",
             "для систем видеонаблюдения"
     };
-
-
 
     @NonNull
     @Override
@@ -115,7 +113,7 @@ public class EditHardDriveDialog extends DialogFragment {
                 .setTitle("Редактировать диск")
                 .setPositiveButton("Сохранить", (dialog, which) -> {
                     HardDriveDTO updated = new HardDriveDTO();
-                    updated.setId(hardDriveDTO.getId()); // обязательно id
+                    updated.setId(hardDriveDTO.getId());
 
                     updated.setBrand(etBrand.getText().toString());
                     updated.setModel(etModel.getText().toString());

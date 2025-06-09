@@ -57,7 +57,6 @@ public class AddHardDriveDialog extends DialogFragment {
                 .setPositiveButton("Добавить", null)
                 .setNegativeButton("Отмена", (d, which) -> d.dismiss());
 
-        // Настройка адаптеров для выпадающих списков
         setupDropdownAdapters(dialogView);
 
         AlertDialog dialog = builder.create();
@@ -102,7 +101,7 @@ public class AddHardDriveDialog extends DialogFragment {
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_dropdown_item_1line, new String[]{"SSD", "HDD"});
         ArrayAdapter<String> formFactorAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_dropdown_item_1line, new String[]{"2.5\"", "3.5\"", "M.2", "PCIe"});
+                android.R.layout.simple_dropdown_item_1line, new String[]{"2.5\"", "3.5\"", "M.2"});
         ArrayAdapter<String> purposeAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_dropdown_item_1line, getUniquePurposes());
 

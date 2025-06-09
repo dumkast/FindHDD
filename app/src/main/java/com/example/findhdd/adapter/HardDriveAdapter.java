@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.findhdd.R;
 import com.example.findhdd.dto.HardDriveDTO;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,39 +20,31 @@ import java.util.Set;
 import lombok.Setter;
 
 public class HardDriveAdapter extends RecyclerView.Adapter<HardDriveAdapter.HardDriveViewHolder> {
-
-    private List<HardDriveDTO> hardDrives;
-    private FavoritesToggleListener favoritesToggleListener;
-    private Set<Long> favoriteIds = new HashSet<>();
-    private boolean isAdmin;
-    private boolean isFavoritesTab;
+    private List<HardDriveDTO> hardDrives = new ArrayList<>();
+    private final Set<Long> favoriteIds = new HashSet<>();
+    private final boolean isAdmin;
     @Setter
-    private AdminActionListener adminActionListener;
+    private ActionListener actionListener;
 
-    public interface FavoritesToggleListener {
+    public interface ActionListener {
         void onFavoriteToggled(HardDriveDTO hdd, boolean isFavorite);
-    }
-
-    public interface AdminActionListener {
+        void onDetailsClick(HardDriveDTO hdd);
         void onEdit(HardDriveDTO hdd);
         void onDelete(HardDriveDTO hdd);
     }
 
-    // Новый упрощённый конструктор с двумя флагами
-    public HardDriveAdapter(List<HardDriveDTO> hardDrives, FavoritesToggleListener favoritesToggleListener, boolean isAdmin, boolean isFavoritesTab) {
-        this.hardDrives = hardDrives;
-        this.favoritesToggleListener = favoritesToggleListener;
+    public HardDriveAdapter(boolean isAdmin) {
         this.isAdmin = isAdmin;
-        this.isFavoritesTab = isFavoritesTab;
     }
 
     public void updateData(List<HardDriveDTO> newData) {
-        this.hardDrives = newData;
+        this.hardDrives = new ArrayList<>(newData);
         notifyDataSetChanged();
     }
 
-    public void setFavoriteIds(Set<Long> favoriteIds) {
-        this.favoriteIds = new HashSet<>(favoriteIds);
+    public void setFavoriteIds(Set<Long> ids) {
+        favoriteIds.clear();
+        favoriteIds.addAll(ids);
         notifyDataSetChanged();
     }
 
@@ -64,76 +58,7 @@ public class HardDriveAdapter extends RecyclerView.Adapter<HardDriveAdapter.Hard
 
     @Override
     public void onBindViewHolder(@NonNull HardDriveViewHolder holder, int position) {
-        HardDriveDTO hdd = hardDrives.get(position);
-        holder.tvBrandModel.setText(hdd.getBrand() + " " + hdd.getModel());
-        holder.tvType.setText("Тип: " + hdd.getType());
-        holder.tvCapacity.setText("Объем: " + hdd.getCapacity() + " ГБ");
-        holder.tvFormFactor.setText("Форм-фактор: " + hdd.getFormFactor());
-        holder.tvSpeeds.setText("Скорости: Чтение " + hdd.getReadSpeed() + " МБ/с, Запись " + hdd.getWriteSpeed() + " МБ/с");
-
-        // Новые поля:
-        holder.tvPurpose.setText("Назначение: " + hdd.getPurpose()); // назначение
-        holder.tvPrice.setText(String.format("%,.2f ₽", hdd.getPrice())); // цена с двумя знаками и ₽
-
-        holder.itemView.setOnClickListener(v -> {
-            if (detailsClickListener != null) {
-                detailsClickListener.onDetailsClick(hdd);
-            }
-        });
-
-        if (isAdmin) {
-            holder.btnEdit.setVisibility(View.VISIBLE);
-            holder.btnDelete.setVisibility(View.VISIBLE);
-
-            holder.btnEdit.setOnClickListener(v -> {
-                if (adminActionListener != null) {
-                    adminActionListener.onEdit(hdd);
-                }
-            });
-
-            holder.btnDelete.setOnClickListener(v -> {
-                if (adminActionListener != null) {
-                    adminActionListener.onDelete(hdd);
-                }
-            });
-        } else {
-            holder.btnEdit.setVisibility(View.GONE);
-            holder.btnDelete.setVisibility(View.GONE);
-        }
-
-        boolean isFavorite = favoriteIds.contains(hdd.getId());
-        holder.ivFavorite.setImageResource(isFavorite ? R.drawable.ic_heart_filled : R.drawable.ic_heart_border);
-
-        holder.ivFavorite.setOnClickListener(v -> {
-            boolean newFavoriteState = !favoriteIds.contains(hdd.getId());
-
-            holder.ivFavorite.animate().alpha(0f).setDuration(150).withEndAction(() -> {
-                holder.ivFavorite.setImageResource(
-                        newFavoriteState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_border
-                );
-                holder.ivFavorite.animate().alpha(1f).setDuration(150).start();
-            }).start();
-
-            if (favoritesToggleListener != null) {
-                favoritesToggleListener.onFavoriteToggled(hdd, newFavoriteState);
-            }
-
-            if (newFavoriteState) {
-                favoriteIds.add(hdd.getId());
-            } else {
-                favoriteIds.remove(hdd.getId());
-            }
-        });
-    }
-
-    public interface OnDetailsClickListener {
-        void onDetailsClick(HardDriveDTO hdd);
-    }
-
-    private OnDetailsClickListener detailsClickListener;
-
-    public void setOnDetailsClickListener(OnDetailsClickListener listener) {
-        this.detailsClickListener = listener;
+        holder.bind(hardDrives.get(position), isAdmin, favoriteIds.contains(hardDrives.get(position).getId()), actionListener);
     }
 
     @Override
@@ -142,11 +67,11 @@ public class HardDriveAdapter extends RecyclerView.Adapter<HardDriveAdapter.Hard
     }
 
     static class HardDriveViewHolder extends RecyclerView.ViewHolder {
-        TextView tvBrandModel, tvType, tvCapacity, tvFormFactor, tvSpeeds, tvPurpose, tvPrice;
-        ImageView ivFavorite;
-        ImageButton btnEdit, btnDelete;
+        private final TextView tvBrandModel, tvType, tvCapacity, tvFormFactor, tvSpeeds, tvPurpose, tvPrice;
+        private final ImageView ivFavorite;
+        private final ImageButton btnEdit, btnDelete;
 
-        public HardDriveViewHolder(@NonNull View itemView) {
+        HardDriveViewHolder(@NonNull View itemView) {
             super(itemView);
             tvBrandModel = itemView.findViewById(R.id.tvBrandModel);
             tvType = itemView.findViewById(R.id.tvType);
@@ -159,6 +84,49 @@ public class HardDriveAdapter extends RecyclerView.Adapter<HardDriveAdapter.Hard
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
         }
-    }
 
+        void bind(HardDriveDTO hdd, boolean isAdmin, boolean isFavorite, ActionListener listener) {
+            // Установка текстовых значений
+            tvBrandModel.setText(String.format("%s %s", hdd.getBrand(), hdd.getModel()));
+            tvType.setText(String.format("Тип: %s", hdd.getType()));
+            tvCapacity.setText(String.format("Объем: %s ГБ", hdd.getCapacity()));
+            tvFormFactor.setText(String.format("Форм-фактор: %s", hdd.getFormFactor()));
+            tvSpeeds.setText(String.format("Скорости: Чтение %s МБ/с, Запись %s МБ/с", hdd.getReadSpeed(), hdd.getWriteSpeed()));
+            tvPurpose.setText(String.format("Назначение: %s", hdd.getPurpose()));
+            tvPrice.setText(String.format("%,.2f ₽", hdd.getPrice()));
+
+            // Обработка кликов
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onDetailsClick(hdd);
+            });
+
+            // Настройка видимости кнопок админа
+            btnEdit.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+            btnDelete.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+
+            if (isAdmin) {
+                btnEdit.setOnClickListener(v -> {
+                    if (listener != null) listener.onEdit(hdd);
+                });
+                btnDelete.setOnClickListener(v -> {
+                    if (listener != null) listener.onDelete(hdd);
+                });
+            }
+
+            // Настройка избранного
+            ivFavorite.setImageResource(isFavorite ? R.drawable.ic_heart_filled : R.drawable.ic_heart_border);
+            ivFavorite.setOnClickListener(v -> {
+                boolean newState = !isFavorite;
+                animateFavoriteIcon(newState);
+                if (listener != null) listener.onFavoriteToggled(hdd, newState);
+            });
+        }
+
+        private void animateFavoriteIcon(boolean newState) {
+            ivFavorite.animate().alpha(0f).setDuration(150).withEndAction(() -> {
+                ivFavorite.setImageResource(newState ? R.drawable.ic_heart_filled : R.drawable.ic_heart_border);
+                ivFavorite.animate().alpha(1f).setDuration(150).start();
+            }).start();
+        }
+    }
 }

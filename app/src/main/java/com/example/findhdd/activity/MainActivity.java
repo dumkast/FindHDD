@@ -21,7 +21,6 @@ import lombok.Getter;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigation;
-    private FrameLayout fragmentContainer;
     @Getter
     private UserApi userApi;
 
@@ -31,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         bottomNavigation = findViewById(R.id.bottom_navigation);
-        fragmentContainer = findViewById(R.id.fragment_container);
         PreferencesManager prefs = new PreferencesManager(this);
         String username = prefs.getUsername();
         String password = prefs.getPassword();
@@ -44,21 +42,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         userApi = ApiClient.getClient(username, password).create(UserApi.class);
-
-        setupNavigation();
-    }
-
-    private void setupNavigation() {
-        bottomNavigation.getMenu().clear();
-        bottomNavigation.inflateMenu(R.menu.bottom_nav_menu); // Меню без админа
-
         if (getSupportFragmentManager().findFragmentById(R.id.fragment_container) == null) {
             loadFragment(new CatalogFragment());
         }
 
         bottomNavigation.setOnItemSelectedListener(item -> {
             Fragment selectedFragment;
-
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_catalog) {
@@ -68,9 +57,8 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             } else {
-                selectedFragment = new CatalogFragment(); // fallback
+                selectedFragment = new CatalogFragment();
             }
-
             return loadFragment(selectedFragment);
         });
     }
@@ -86,7 +74,5 @@ public class MainActivity extends AppCompatActivity {
 
     public void recreateApiClient(String username, String password) {
         this.userApi = ApiClient.getClient(username, password).create(UserApi.class);
-        // При необходимости обновить UI или данные
-        setupNavigation();
     }
 }

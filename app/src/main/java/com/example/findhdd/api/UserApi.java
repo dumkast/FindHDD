@@ -12,7 +12,7 @@ import java.util.Map;
 
 public interface UserApi {
     @GET("user/login")
-    Call<Void> login();
+    Call<ApiMessage> login();
 
     @POST("user/register")
     Call<ApiMessage> register(@Body Map<String, String> body);

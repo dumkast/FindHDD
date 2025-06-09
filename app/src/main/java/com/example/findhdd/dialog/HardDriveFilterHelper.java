@@ -24,7 +24,9 @@ public class HardDriveFilterHelper {
         return Arrays.asList("2.5\"", "3.5\"", "M.2");
     }
     public static List<String> getUniquePurposes() {
-        return Arrays.asList("для ноутбука", "для настольного компьютера", "для настольного компьютера и ноутбука", "для сервера", "для NAS", "для систем видеонаблюдения");
+        return Arrays.asList("для ноутбука", "для настольного компьютера",
+                "для настольного компьютера и ноутбука",
+                "для сервера", "для NAS", "для систем видеонаблюдения");
     }
 
     public static void setupCheckboxList(Context context, LinearLayout layout, List<String> items, List<String> selectedItems) {
@@ -42,7 +44,7 @@ public class HardDriveFilterHelper {
                 checkBox.setButtonTintList(ColorStateList.valueOf(customColor));
             }
 
-            if (selectedItems != null && selectedItems.contains(item)) {
+            if (selectedItems.contains(item)) {
                 checkBox.setChecked(true);
             }
 

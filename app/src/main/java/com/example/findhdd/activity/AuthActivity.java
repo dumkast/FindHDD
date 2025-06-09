@@ -31,8 +31,6 @@ public class AuthActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_auth);
-
-        // Загружаем LoginFragment
         loadLoginFragment();
     }
 
@@ -45,7 +43,6 @@ public class AuthActivity extends AppCompatActivity {
     public void loadRegisterFragment() {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, new RegisterFragment());
-        transaction.addToBackStack(null); // Для возможности возврата по кнопке "Назад"
         transaction.commit();
     }
 }
